@@ -2,7 +2,7 @@
 
 A browser-based tool for analyzing the stability of linear control systems using the Routh–Hurwitz criterion. No install, no dependencies, no build step — just a single HTML file.
 
-**[Live Demo →](https://yourusername.github.io/routh-hurwitz)**
+**[Live Demo →](https://ahmed-farhanur-rashid.github.io/routh-hurwitz-table-builder/)**
 
 ---
 
