@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routh–Hurwitz Stability Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #0a0c0f;
+  --surface:   #111318;
+  --surface2:  #181c23;
+  --border:    #222730;
+  --border2:   #2e3440;
+  --accent:    #4fffb0;
+  --accent2:   #00c8ff;
+  --warn:      #ffb830;
+  --danger:    #ff4d6d;
+  --info:      #4fffb0;
+  --text:      #e8edf5;
+  --text2:     #7a8499;
+  --text3:     #3d4455;
+  --mono:      'Space Mono', monospace;
+  --sans:      'Syne', sans-serif;
+  --radius:    8px;
+  --radius-lg: 14px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 10% 20%, rgba(79,255,176,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 500px at 90% 80%, rgba(0,200,255,0.04) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 5rem;
+}
+
+header {
+  margin-bottom: 3rem;
+  animation: fadeUp 0.6s ease both;
+}
+
+.header-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  padding: 4px 10px;
+  border: 1px solid rgba(79,255,176,0.3);
+  border-radius: 4px;
+}
+
+h1 {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1.1;
+  color: var(--text);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.75rem;
+}
+
+h1 span {
+  color: transparent;
+  -webkit-text-stroke: 1px var(--accent);
+}
+
+.subtitle {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.7;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  margin-bottom: 1.25rem;
+  animation: fadeUp 0.5s ease both;
+}
+
+.card-title {
+  font-size: 11px;
+  font-family: var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text2);
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.degree-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.degree-row label {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+}
+
+input[type=number] {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 8px 12px;
+  width: 70px;
+  text-align: center;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type=number]:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79,255,176,0.1);
+}
+
+input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
+
+.coeff-grid {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.coeff-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.coeff-item label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 0.05em;
+}
+
+.coeff-item input {
+  width: 68px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+
+.btn:hover {
+  background: rgba(79,255,176,0.08);
+  box-shadow: 0 0 20px rgba(79,255,176,0.15);
+}
+
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #0a0c0f;
+  font-weight: 700;
+  border-color: var(--accent);
+}
+
+.btn-primary:hover {
+  background: #6fffbe;
+  box-shadow: 0 0 30px rgba(79,255,176,0.3);
+}
+
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-ghost {
+  border-color: var(--border2);
+  color: var(--text2);
+}
+
+.btn-ghost:hover {
+  border-color: var(--text2);
+  background: var(--surface2);
+  box-shadow: none;
+}
+
+.result-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.25rem;
+  animation: fadeUp 0.4s ease both;
+}
+
+.result-banner.stable {
+  background: rgba(79,255,176,0.07);
+  border: 1px solid rgba(79,255,176,0.25);
+}
+
+.result-banner.unstable {
+  background: rgba(255,77,109,0.07);
+  border: 1px solid rgba(255,77,109,0.25);
+}
+
+.result-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stable .result-dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.unstable .result-dot { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+.result-label {
+  font-family: var(--sans);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+}
+
+.stable .result-label { color: var(--accent); }
+.unstable .result-label { color: var(--danger); }
+
+.result-sub {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  margin-left: auto;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+thead th {
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-weight: 400;
+}
+
+thead th:first-child { border-radius: var(--radius) 0 0 0; }
+thead th:last-child  { border-radius: 0 var(--radius) 0 0; }
+
+tbody td {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+tbody tr:last-child td { border-bottom: none; }
+
+tbody tr:hover td { background: rgba(255,255,255,0.02); }
+
+td.r-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--surface2);
+  border-right: 1px solid var(--border);
+  min-width: 48px;
+  text-align: center;
+}
+
+td.hi-warn {
+  background: rgba(255,77,109,0.12);
+  color: var(--danger);
+  font-weight: 700;
+}
+
+td.hi-case1 {
+  background: rgba(0,200,255,0.1);
+  color: var(--accent2);
+}
+
+td.hi-case2 {
+  background: rgba(255,184,48,0.1);
+  color: var(--warn);
+}
+
+.step-hdr {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.step-note {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  line-height: 1.7;
+  margin-bottom: 0.75rem;
+}
+
+.aux-note {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--warn);
+  background: rgba(255,184,48,0.06);
+  border-left: 2px solid var(--warn);
+  padding: 8px 12px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-top: 10px;
+}
+
+.case1-note {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--accent2);
+  background: rgba(0,200,255,0.06);
+  border-left: 2px solid var(--accent2);
+  padding: 8px 12px;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  margin-top: 10px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding-top: 0.5rem;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.25rem 0;
+}
+
+footer {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  padding-top: 2rem;
+  animation: fadeUp 0.7s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.output-section { animation: fadeUp 0.4s ease both; }
+
+sup { font-size: 0.7em; vertical-align: super; line-height: 0; }
+sub { font-size: 0.7em; vertical-align: sub; line-height: 0; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-tag">Control Systems</div>
+    <h1>Routh–<span>Hurwitz</span><br>Stability Analyzer</h1>
+    <p class="subtitle">Characteristic equation: a₀sⁿ + a₁sⁿ⁻¹ + … + aₙ = 0<br>Handles Case 1 (zero in first column) and Case 2 (all-zero row) algebraically.</p>
+  </header>
+
+  <div class="card" style="animation-delay:0.1s">
+    <div class="card-title">Input polynomial</div>
+
+    <div class="degree-row">
+      <label>Degree n =</label>
+      <input type="number" id="deg" min="1" max="9" value="5">
+      <button class="btn btn-ghost" onclick="buildCoeffs()">Set coefficients →</button>
+    </div>
+
+    <div id="coeff-area" class="coeff-grid"></div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="runSolver()">Build Routh table</button>
+      <button class="btn btn-ghost" onclick="clearAll()">Clear</button>
+    </div>
+  </div>
+
+  <div id="steps"></div>
+
+  <footer>
+    Routh–Hurwitz criterion · Case 1 &amp; Case 2 algebraic handling · Exact fraction arithmetic
+  </footer>
+
+</div>
+<script>
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b){let t=b;b=a%b;a=t;}return a||1;}
+function lcm(a,b){return Math.abs(a*b)/gcd(a,b);}
+function fmtF(n,d){
+  if(d===0)return 'undef';
+  const g=gcd(Math.abs(n),Math.abs(d));n=n/g;d=d/g;
+  if(d<0){n=-n;d=-d;}
+  return d===1?''+n:n+'/'+d;
+}
+function mulF(n1,d1,n2,d2){
+  const g1=gcd(Math.abs(n1),Math.abs(d2)),g2=gcd(Math.abs(n2),Math.abs(d1));
+  return[(n1/g1)*(n2/g2),(d1/g2)*(d2/g1)];
+}
+function divF(n1,d1,n2,d2){return mulF(n1,d1,d2,n2);}
+function subF(n1,d1,n2,d2){const l=lcm(d1,d2);return[n1*(l/d1)-n2*(l/d2),l];}
+function signF(n,d){if(n===0)return 0;return(d>0?1:-1)*(n>0?1:-1);}
+function polyMulS1(c){
+  const r=new Array(c.length+1).fill(0);
+  for(let i=0;i<c.length;i++){r[i]+=c[i];r[i+1]+=c[i];}
+  return r;
+}
+
+function buildRouth(coeffs){
+  const n=coeffs.length-1;
+  const cols=Math.ceil((n+1)/2);
+  const rows=n+1;
+  let arr=Array.from({length:rows},()=>Array.from({length:cols},()=>[0,1]));
+  const flags=Array(rows).fill('');
+  const events=[];
+  for(let j=0;j<cols;j++){
+    if(2*j<=n)arr[0][j]=[coeffs[2*j],1];
+    if(2*j+1<=n)arr[1][j]=[coeffs[2*j+1],1];
+  }
+  for(let i=2;i<rows;i++){
+    const allZero=arr[i-1].every(([nn])=>nn===0);
+    if(allZero){
+      flags[i-1]='case2';
+      const abovePower=n-(i-2);
+      events.push({row:i-1,type:'case2',abovePower,aboveRowIdx:i-2});
+      for(let j=0;j<cols;j++){
+        const exp=abovePower-2*j;
+        if(exp<=0){arr[i-1][j]=[0,1];continue;}
+        arr[i-1][j]=mulF(...arr[i-2][j],exp,1);
+      }
+    } else if(arr[i-1][0][0]===0){
+      flags[i-1]='case1';
+      events.push({row:i-1,type:'case1'});
+      return{arr,flags,cols,n,rows,events,case1Row:i-1};
+    }
+    for(let j=0;j<cols-1;j++){
+      const[p0n,p0d]=arr[i-1][0];
+      const[an,ad]=arr[i-2][j+1];
+      const[bn,bd]=arr[i-1][j+1];
+      const[cn,cd]=arr[i-2][0];
+      const t1=mulF(cn,cd,bn,bd);
+      const t2=mulF(p0n,p0d,an,ad);
+      const[sn,sd]=subF(t2[0],t2[1],t1[0],t1[1]);
+      arr[i][j]=divF(sn,sd,p0n,p0d);
+    }
+  }
+  return{arr,flags,cols,n,rows,events,case1Row:-1};
+}
+
+function polyStr(rowData,cols,topPower){
+  const terms=[];
+  for(let j=0;j<cols;j++){
+    const exp=topPower-2*j;
+    if(exp<0)break;
+    const[n,d]=rowData[j];
+    if(n===0)continue;
+    const c=fmtF(n,d);
+    terms.push(exp===0?c:exp===1?`${c}s`:`${c}s<sup>${exp}</sup>`);
+  }
+  return terms.join(' + ')||'0';
+}
+
+function derivStr(rowData,cols,topPower){
+  const terms=[];
+  for(let j=0;j<cols;j++){
+    const exp=topPower-2*j;
+    if(exp<=0)break;
+    const[mn,md]=mulF(...rowData[j],exp,1);
+    if(mn===0)continue;
+    const newExp=exp-1;
+    const c=fmtF(mn,md);
+    terms.push(newExp===0?c:newExp===1?`${c}s`:`${c}s<sup>${newExp}</sup>`);
+  }
+  return terms.join(' + ')||'0';
+}
+
+function renderTable(arr,flags,cols,n,rows){
+  let h=`<div class="table-wrap"><table><thead><tr><th>Row</th>`;
+  for(let j=0;j<cols;j++)h+=`<th>Col ${j+1}</th>`;
+  h+=`</tr></thead><tbody>`;
+  for(let i=0;i<rows;i++){
+    const sc=signF(...arr[i][0]),sp=i>0?signF(...arr[i-1][0]):sc;
+    h+=`<tr><td class="r-label">s<sup>${n-i}</sup></td>`;
+    for(let j=0;j<cols;j++){
+      let cls='';
+      if(j===0&&i>0&&sc!==sp&&sc!==0)cls=' class="hi-warn"';
+      else if(flags[i]==='case1'&&j===0)cls=' class="hi-case1"';
+      else if(flags[i]==='case2')cls=' class="hi-case2"';
+      h+=`<td${cls}>${fmtF(...arr[i][j])}</td>`;
+    }
+    h+=`</tr>`;
+  }
+  return h+`</tbody></table></div>`;
+}
+
+function countSignChanges(arr,rows){
+  let c=0;
+  const s=arr.map(r=>{const v=signF(...r[0]);return v===0?1:v;});
+  for(let i=1;i<rows;i++)if(s[i]!==s[i-1])c++;
+  return c;
+}
+
+function polyToStr(c){
+  const n=c.length-1;
+  return c.map((v,i)=>{
+    if(v===0)return null;
+    const e=n-i,vs=(v===1&&e>0)?'':v;
+    return e===0?`${v}`:e===1?`${vs}s`:e<=4?`${vs}s<sup>${e}</sup>`:`${vs}s<sup>${e}</sup>`;
+  }).filter(Boolean).join(' + ');
+}
+
+function buildCoeffs(){
+  const n=parseInt(document.getElementById('deg').value)||1;
+  const area=document.getElementById('coeff-area');
+  area.innerHTML='';
+  for(let i=0;i<=n;i++){
+    const w=document.createElement('div');
+    w.className='coeff-item';
+    w.innerHTML=`<label>a<sub>${i}</sub> · s<sup>${n-i}</sup></label><input type="number" id="c${i}" placeholder="0">`;
+    area.appendChild(w);
+  }
+}
+
+function clearAll(){
+  document.getElementById('steps').innerHTML='';
+  buildCoeffs();
+}
+
+function runSolver(){
+  const n=parseInt(document.getElementById('deg').value)||1;
+  let coeffs=[];
+  for(let i=0;i<=n;i++){
+    const v=parseFloat(document.getElementById('c'+i).value);
+    coeffs.push(isNaN(v)?0:v);
+  }
+  if(coeffs[0]===0){
+    document.getElementById('steps').innerHTML=`<div class="card"><p class="step-note" style="color:var(--danger)">Leading coefficient a₀ cannot be zero.</p></div>`;
+    return;
+  }
+
+  let html='',allCoeffs=coeffs.slice(),multiplied=false;
+  const res=buildRouth(allCoeffs);
+
+  if(res.case1Row>=0){
+    multiplied=true;
+    const newC=polyMulS1(allCoeffs);
+    html+=`<div class="card output-section">
+      <div class="card-title">Step 1 — Case 1 detected</div>
+      <p class="step-note">Zero appeared in first column at row s<sup>${n-res.case1Row}</sup> before the table could complete.</p>
+      ${renderTable(res.arr,res.flags,res.cols,n,res.case1Row+1)}
+      <div class="case1-note">
+        Multiplying original polynomial by (s+1) to eliminate the zero pivot.<br>
+        Original: ${polyToStr(allCoeffs)}<br>
+        After &times;(s+1): ${polyToStr(newC)}
+      </div>
+    </div>`;
+    allCoeffs=newC;
+  }
+
+  const res2=buildRouth(allCoeffs);
+  const{arr,flags,cols,rows,events}=res2;
+  const newN=allCoeffs.length-1;
+  const c2=events.filter(e=>e.type==='case2');
+
+  let auxNotes='';
+  c2.forEach(e=>{
+    const aboveRow=arr[e.aboveRowIdx];
+    const aStr=polyStr(aboveRow,cols,e.abovePower);
+    const dStr=derivStr(aboveRow,cols,e.abovePower);
+    auxNotes+=`<div class="aux-note">Case 2 at s<sup>${newN-e.row}</sup>: all-zero row detected.<br>A(s) = ${aStr}<br>dA/ds = ${dStr} &nbsp;← substituted as replacement row</div>`;
+  });
+
+  const sc=countSignChanges(arr,rows);
+  const isStable=sc===0;
+  const verdict=isStable?'System is stable':'System is unstable';
+  const vsub=isStable?'No roots in right-half plane':`${sc} RHP pole${sc>1?'s':''} detected`;
+
+  html+=`<div class="result-banner ${isStable?'stable':'unstable'}">
+    <div class="result-dot"></div>
+    <div>
+      <div class="result-label">${verdict}</div>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:2px">${vsub}</div>
+    </div>
+    <div class="result-sub">sign changes: ${sc}</div>
+  </div>`;
+
+  html+=`<div class="card output-section">
+    <div class="card-title">${multiplied?'Routh array — rebuilt after &times;(s+1)':'Routh array'}</div>
+    ${c2.length?`<p class="step-note">Amber rows were replaced using the auxiliary polynomial derivative (Case 2).</p>`:''}
+    ${renderTable(arr,flags,cols,newN,rows)}
+    ${auxNotes}
+  </div>`;
+
+  if(multiplied){
+    html+=`<div class="card output-section">
+      <p class="step-note" style="margin:0">The (s+1) multiplication adds one known stable pole at s = &minus;1 (LHP). The sign change count above reflects the original system's RHP poles only.</p>
+    </div>`;
+  }
+
+  html+=`<div class="card output-section">
+    <div class="card-title">Legend</div>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(255,77,109,0.5);border:1px solid var(--danger)"></div>Sign change — RHP pole</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(0,200,255,0.3);border:1px solid var(--accent2)"></div>Case 1 — zero in first column</div>
+      <div class="legend-item"><div class="legend-dot" style="background:rgba(255,184,48,0.3);border:1px solid var(--warn)"></div>Case 2 — all-zero row replaced</div>
+    </div>
+  </div>`;
+
+  const stepsEl=document.getElementById('steps');
+  stepsEl.innerHTML=html;
+  stepsEl.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+buildCoeffs();
+</script>
+</body>
+</html>
