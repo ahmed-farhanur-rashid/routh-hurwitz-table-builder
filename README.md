@@ -66,14 +66,6 @@ For the characteristic polynomial `s⁵ + 2s⁴ + 24s³ + 48s² − 24s − 50`:
 
 ---
 
-## Hosting
-
-This is a single `index.html` file with no external dependencies beyond two Google Fonts. It can be hosted anywhere static files are served.
-
-To host on GitHub Pages: push `index.html` to the root of a public repository, then enable Pages under **Settings → Pages → Deploy from branch → main / root**.
-
----
-
 ## Tech
 
 - Vanilla HTML, CSS, JavaScript — no frameworks
